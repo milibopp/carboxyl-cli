@@ -41,7 +41,7 @@ mod test {
 
     #[test]
     fn writes_events_from_output_stream() {
-        let writer = SyncWriter::new(vec![]);
+        let writer = SyncWriter::new();
         let driver = IoDriver::new(writer.clone());
         let sink = Sink::new();
         let output = sink.stream();

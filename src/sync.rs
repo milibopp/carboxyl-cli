@@ -8,8 +8,8 @@ pub struct SyncWriter {
 }
 
 impl SyncWriter {
-    pub fn new(contents: Vec<u8>) -> SyncWriter {
-        SyncWriter { buffer: Arc::new(RwLock::new(contents)) }
+    pub fn new() -> SyncWriter {
+        SyncWriter { buffer: Arc::new(RwLock::new(vec![])) }
     }
 
     pub fn contents(&self) -> Option<RwLockReadGuard<Vec<u8>>> {
@@ -42,7 +42,7 @@ mod test {
 
     #[test]
     fn sync_writer_writes_to_inner_buffer() {
-        let mut writer = SyncWriter::new(vec![]);
+        let mut writer = SyncWriter::new();
         writer.write(&[3, 1]).unwrap();
         assert_eq!(&*writer.contents().unwrap(), &[3, 1]);
     }
