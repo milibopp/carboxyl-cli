@@ -8,17 +8,17 @@ use carboxyl::Stream;
 mod sync;
 
 
-pub struct IoDriver<W> {
+pub struct WriteDriver<W> {
     writer: W,
 }
 
-impl<W> IoDriver<W> {
-    pub fn new(writer: W) -> IoDriver<W> {
-        IoDriver { writer: writer }
+impl<W> WriteDriver<W> {
+    pub fn new(writer: W) -> WriteDriver<W> {
+        WriteDriver { writer: writer }
     }
 }
 
-impl<W: 'static + Send + Write> IoDriver<W> {
+impl<W: 'static + Send + Write> WriteDriver<W> {
     pub fn drive(mut self, output: Stream<String>) -> Stream<String> {
         thread::spawn(move || {
             for text in output.events() {
@@ -39,14 +39,16 @@ mod test {
     use super::*;
     use ::sync::SyncWriter;
 
+    const SAMPLE: &'static str = "abc";
+
     #[test]
     fn writes_events_from_output_stream() {
         let writer = SyncWriter::new();
         let sink = Sink::new();
-        IoDriver::new(writer.clone())
+        WriteDriver::new(writer.clone())
             .drive(sink.stream());
-        sink.send("abc".to_string());
+        sink.send(SAMPLE.to_string());
         thread::sleep_ms(1);
-        assert_eq!(&(*writer.contents().unwrap())[..], "abc".as_bytes());
+        assert_eq!(&(*writer.contents().unwrap())[..], SAMPLE.as_bytes());
     }
 }
