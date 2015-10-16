@@ -19,7 +19,7 @@ impl<W> WriteDriver<W> {
 }
 
 impl<W: 'static + Send + Write> WriteDriver<W> {
-    pub fn drive(mut self, output: Stream<String>) -> Stream<String> {
+    pub fn drive(mut self, output: Stream<String>) {
         let events = output.events();
         thread::spawn(move || {
             for text in events {
@@ -27,7 +27,6 @@ impl<W: 'static + Send + Write> WriteDriver<W> {
                 self.writer.flush().unwrap();
             }
         });
-        Stream::never()
     }
 }
 
