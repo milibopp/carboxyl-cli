@@ -2,6 +2,7 @@ use std::io::{ self, Write };
 use std::sync::{ Arc, RwLock, RwLockReadGuard };
 
 
+#[derive(Clone)]
 pub struct SyncWriter {
     buffer: Arc<RwLock<Vec<u8>>>,
 }
@@ -31,16 +32,15 @@ impl Write for SyncWriter {
 }
 
 
-
+#[cfg(test)]
 mod test {
     use super::*;
-    use carboxyl::Sink;
     use std::io::Write;
 
     #[test]
     fn sync_writer_writes_to_inner_buffer() {
         let mut writer = SyncWriter::new(vec![]);
-        writer.write(&[3, 1]);
+        writer.write(&[3, 1]).unwrap();
         assert_eq!(&*writer.contents().unwrap(), &[3, 1]);
     }
 }
