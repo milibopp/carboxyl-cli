@@ -42,10 +42,9 @@ mod test {
     #[test]
     fn writes_events_from_output_stream() {
         let writer = SyncWriter::new();
-        let driver = IoDriver::new(writer.clone());
         let sink = Sink::new();
-        let output = sink.stream();
-        let _input = driver.drive(output);
+        IoDriver::new(writer.clone())
+            .drive(sink.stream());
         sink.send("abc".to_string());
         thread::sleep_ms(1);
         assert_eq!(&(*writer.contents().unwrap())[..], "abc".as_bytes());
