@@ -20,8 +20,9 @@ impl<W> WriteDriver<W> {
 
 impl<W: 'static + Send + Write> WriteDriver<W> {
     pub fn drive(mut self, output: Stream<String>) -> Stream<String> {
+        let events = output.events();
         thread::spawn(move || {
-            for text in output.events() {
+            for text in events {
                 self.writer.write(text.as_bytes()).unwrap();
                 self.writer.flush().unwrap();
             }
@@ -41,6 +42,14 @@ mod test {
 
     const SAMPLE: &'static str = "abc";
 
+    fn check_timeout<F: FnMut() -> bool>(mut predicate: F, retries: u32) {
+        for _ in 0..retries {
+            thread::sleep_ms(1);
+            if predicate() { return; }
+        }
+        panic!()
+    }
+
     #[test]
     fn writes_events_from_output_stream() {
         let writer = SyncWriter::new();
@@ -48,7 +57,6 @@ mod test {
         WriteDriver::new(writer.clone())
             .drive(sink.stream());
         sink.send(SAMPLE.to_string());
-        thread::sleep_ms(1);
-        assert_eq!(&(*writer.contents().unwrap())[..], SAMPLE.as_bytes());
+        check_timeout(|| &(*writer.contents().unwrap())[..] == SAMPLE.as_bytes(), 100);
     }
 }
