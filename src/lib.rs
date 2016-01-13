@@ -61,6 +61,7 @@ impl<R: 'static + Send + Read> ReadDriver<R> {
 mod test {
     use std::thread;
     use std::io::Cursor;
+    use std::time::Duration;
     use carboxyl::Sink;
 
     use super::*;
@@ -70,7 +71,7 @@ mod test {
 
     fn check_timeout<F: FnMut() -> bool>(mut predicate: F, retries: u32) {
         for _ in 0..retries {
-            thread::sleep_ms(1);
+            thread::sleep(Duration::from_millis(1));
             if predicate() { return; }
         }
         panic!()
