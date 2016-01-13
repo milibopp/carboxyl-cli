@@ -84,7 +84,7 @@ mod test {
             thread::sleep(Duration::from_millis(1));
             if predicate() { return; }
         }
-        panic!()
+        panic!("check timed out")
     }
 
     #[test]
