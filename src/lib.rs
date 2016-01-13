@@ -1,7 +1,7 @@
 extern crate carboxyl;
 
 use std::io::{ Read, Write, BufReader, BufRead };
-use std::thread;
+use std::{ iter, thread };
 use carboxyl::{ Sink, Stream };
 
 #[cfg(test)]
@@ -24,6 +24,7 @@ impl<W: 'static + Send + Write> WriteDriver<W> {
         thread::spawn(move || {
             for text in events {
                 self.writer.write(text.as_bytes()).unwrap();
+                self.writer.write("\n".as_bytes()).unwrap();
                 self.writer.flush().unwrap();
             }
         });
@@ -31,8 +32,15 @@ impl<W: 'static + Send + Write> WriteDriver<W> {
 }
 
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Input {
+    Line(String),
+    End,
+}
+
+
 pub struct ReadDriver<R> {
-    sink: Sink<String>,
+    sink: Sink<Input>,
     reader: R,
 }
 
@@ -43,7 +51,7 @@ impl<R> ReadDriver<R> {
 }
 
 impl<R: 'static + Send + Read> ReadDriver<R> {
-    pub fn stream(&self) -> Stream<String> {
+    pub fn stream(&self) -> Stream<Input> {
         self.sink.stream()
     }
 
@@ -52,6 +60,8 @@ impl<R: 'static + Send + Read> ReadDriver<R> {
             BufReader::new(self.reader)
                 .lines()
                 .filter_map(|r| r.ok())
+                .map(Input::Line)
+                .chain(iter::once(Input::End))
         );
     }
 }
@@ -84,7 +94,12 @@ mod test {
         WriteDriver::new(writer.clone())
             .drive(sink.stream());
         sink.send(SAMPLE.to_string());
-        check_timeout(|| &(*writer.contents().unwrap())[..] == SAMPLE.as_bytes(), 100);
+        let expected = {
+            let mut s = SAMPLE.to_string();
+            s.push('\n');
+            s
+        };
+        check_timeout(|| &(*writer.contents().unwrap())[..] == expected.as_bytes(), 100);
     }
 
     #[test]
@@ -94,6 +109,6 @@ mod test {
         let inputs = driver.stream();
         let mut events = inputs.events();
         driver.drive();
-        assert_eq!(events.next(), Some("abc".to_string()));
+        assert_eq!(events.next(), Some(Input::Line("abc".to_string())));
     }
 }
