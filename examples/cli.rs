@@ -1,9 +1,9 @@
 extern crate carboxyl;
-extern crate cli_driver;
+extern crate carboxyl_cli;
 
 use std::io::{ stdin, stdout };
 use carboxyl::Stream;
-use cli_driver::{ run, Quit, Input };
+use carboxyl_cli::{ run, Quit, Input };
 
 fn program(inputs: Stream<Input>) -> (Stream<String>, Stream<Quit>) {
     let outputs = inputs.filter_map(Input::line);
