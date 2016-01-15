@@ -3,7 +3,7 @@ extern crate cli_driver;
 
 use std::io::{ stdin, stdout };
 use carboxyl::Stream;
-use cli_driver::{ run, Quit, Input, ReadDriver, WriteDriver };
+use cli_driver::{ run, Quit, Input };
 
 fn program(inputs: Stream<Input>) -> (Stream<String>, Stream<Quit>) {
     let outputs = inputs.filter_map(Input::line);
@@ -12,7 +12,5 @@ fn program(inputs: Stream<Input>) -> (Stream<String>, Stream<Quit>) {
 }
 
 fn main() {
-    let stdin_driver = ReadDriver::new(stdin());
-    let stdout_driver = WriteDriver::new(stdout());
-    run(stdin_driver, stdout_driver, program);
+    run(stdin(), stdout(), program);
 }

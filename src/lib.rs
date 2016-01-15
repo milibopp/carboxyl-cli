@@ -80,15 +80,17 @@ impl<R: 'static + Send + Read> ReadDriver<R> {
     }
 }
 
-pub fn run<R, W, P>(read: ReadDriver<R>, write: WriteDriver<W>, program: P)
+pub fn run<R, W, P>(reader: R, writer: W, program: P)
     where R: 'static + Send + Read,
           W: 'static + Send + Write,
           P: Fn(Stream<Input>) -> (Stream<String>, Stream<Quit>)
 {
-    let (outputs, quit) = program(read.stream());
+    let read_driver = ReadDriver::new(reader);
+    let write_driver = WriteDriver::new(writer);
+    let (outputs, quit) = program(read_driver.stream());
     let mut quit_stream = quit.events();
-    write.drive(outputs);
-    read.drive();
+    write_driver.drive(outputs);
+    read_driver.drive();
     quit_stream.next();
 }
 
@@ -145,8 +147,8 @@ mod test {
         let sample = b"abc\n";
         let writer = SyncWriter::new();
         run(
-            ReadDriver::new(Cursor::new(sample)),
-            WriteDriver::new(writer.clone()),
+            Cursor::new(sample),
+            writer.clone(),
             |inputs| (inputs.filter_map(Input::line), inputs.filter_map(Input::end))
         );
         check_timeout(|| &(*writer.contents().unwrap())[..] == sample, 100);
@@ -159,8 +161,8 @@ mod test {
             let flag = flag.clone();
             move || {
                 run(
-                    ReadDriver::new(Cursor::new(b"")),
-                    WriteDriver::new(SyncWriter::new()),
+                    Cursor::new(b""),
+                    SyncWriter::new(),
                     |_| (Stream::never(), Stream::never())
                 );
                 *flag.lock().unwrap() = true;
