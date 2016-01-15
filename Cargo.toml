@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["Eduard Bopp <eduard.bopp@aepsil0n.de>"]
 
 [dependencies]
-carboxyl = "0.1.1"
+carboxyl = "0.1"
