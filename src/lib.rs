@@ -80,16 +80,29 @@ impl<R: 'static + Send + Read> ReadDriver<R> {
     }
 }
 
+pub fn run<R, W, P>(read: ReadDriver<R>, write: WriteDriver<W>, program: P)
+    where R: 'static + Send + Read,
+          W: 'static + Send + Write,
+          P: Fn(Stream<Input>) -> (Stream<String>, Stream<Quit>)
+{
+    let (outputs, quit) = program(read.stream());
+    let mut quit_stream = quit.events();
+    write.drive(outputs);
+    read.drive();
+    quit_stream.next();
+}
+
 
 #[cfg(test)]
 mod test {
     use std::thread;
     use std::io::Cursor;
     use std::time::Duration;
-    use carboxyl::Sink;
+    use carboxyl::{ Sink, Stream };
 
     use super::*;
     use ::sync::SyncWriter;
+    use std::sync::{ Arc, Mutex };
 
     const SAMPLE: &'static str = "abc";
 
@@ -124,9 +137,36 @@ mod test {
         let mut events = inputs.events();
         driver.drive();
         assert_eq!(events.next(), Some(Input::Line("abc".to_string())));
+        assert_eq!(events.next(), Some(Input::End));
     }
 
     #[test]
-    fn drivers_runs_echo_application() {
+    fn runs_echo_application() {
+        let sample = b"abc\n";
+        let writer = SyncWriter::new();
+        run(
+            ReadDriver::new(Cursor::new(sample)),
+            WriteDriver::new(writer.clone()),
+            |inputs| (inputs.filter_map(Input::line), inputs.filter_map(Input::end))
+        );
+        check_timeout(|| &(*writer.contents().unwrap())[..] == sample, 100);
+    }
+
+    #[test]
+    fn runs_forever_without_end_of_input() {
+        let flag = Arc::new(Mutex::new(false));
+        thread::spawn({
+            let flag = flag.clone();
+            move || {
+                run(
+                    ReadDriver::new(Cursor::new(b"")),
+                    WriteDriver::new(SyncWriter::new()),
+                    |_| (Stream::never(), Stream::never())
+                );
+                *flag.lock().unwrap() = true;
+            }
+        });
+        thread::sleep(Duration::from_millis(5));
+        assert!(!*flag.lock().unwrap());
     }
 }
