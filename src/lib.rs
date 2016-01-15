@@ -38,6 +38,17 @@ pub enum Input {
     End,
 }
 
+impl Input {
+    pub fn line(self) -> Option<String> {
+        if let Input::Line(text) = self { Some(text) }
+        else { None }
+    }
+
+    pub fn end(self) -> bool {
+        self == Input::End
+    }
+}
+
 
 pub struct ReadDriver<R> {
     sink: Sink<Input>,
