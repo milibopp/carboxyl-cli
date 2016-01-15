@@ -31,6 +31,8 @@ impl<W: 'static + Send + Write> WriteDriver<W> {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Quit;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Input {
@@ -44,8 +46,9 @@ impl Input {
         else { None }
     }
 
-    pub fn end(self) -> bool {
-        self == Input::End
+    pub fn end(self) -> Option<Quit> {
+        if let Input::End = self { Some(Quit) }
+        else { None }
     }
 }
 
@@ -121,5 +124,9 @@ mod test {
         let mut events = inputs.events();
         driver.drive();
         assert_eq!(events.next(), Some(Input::Line("abc".to_string())));
+    }
+
+    #[test]
+    fn drivers_runs_echo_application() {
     }
 }
