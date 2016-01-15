@@ -1,5 +1,7 @@
 use std::io::{ self, Write };
 use std::sync::{ Arc, RwLock, RwLockReadGuard, RwLockWriteGuard };
+use std::thread;
+use std::time::Duration;
 
 
 #[derive(Clone)]
@@ -32,6 +34,15 @@ impl Write for SyncWriter {
         self.write_guard()
             .and_then(|mut b| b.flush())
     }
+}
+
+
+pub fn check_timeout<F: FnMut() -> bool>(mut predicate: F, retries: u32) {
+    for _ in 0..retries {
+        thread::sleep(Duration::from_millis(1));
+        if predicate() { return; }
+    }
+    panic!("check timed out")
 }
 
 
