@@ -1,6 +1,6 @@
 [package]
 name = "carboxyl-cli"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Eduard Bopp <eduard.bopp@aepsil0n.de>"]
 description = "Library for functional reactive programming"
 homepage = "https://github.com/aepsil0n/carboxyl-cli"
@@ -10,4 +10,4 @@ keywords = ["frp", "reactive", "cli"]
 license = "LGPL-3.0+"
 
 [dependencies]
-carboxyl = "0.1"
+carboxyl = "0.2"
